@@ -1,11 +1,11 @@
 /** Default chat model when the client or workspace does not specify one. */
-export const CHAT_MODEL = "gpt-4o-mini";
+export const CHAT_MODEL = "openai/gpt-4o-mini";
 
 /** Allowed chat models exposed to the client and workspace settings. */
-export const CHAT_MODELS = ["gpt-4o-mini", "gpt-4o"] as const;
+export const CHAT_MODELS = ["openai/gpt-4o-mini", "openai/gpt-4o"] as const;
 
 /** OpenAI embedding model used for RAG vector indexing and query embedding. */
-export const EMBEDDING_MODEL = "text-embedding-3-small";
+export const EMBEDDING_MODEL = "openai/text-embedding-3-small";
 
 /** Vector dimension count — must match Pinecone index configuration. */
 export const EMBEDDING_DIMENSIONS = 1536;
