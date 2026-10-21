@@ -23,7 +23,10 @@ import {
   type ReportSection,
 } from "./artifact-generation.services.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
-import type { CreateArtifactInput } from "../validators/artifact.validator.js";
+import type {
+  CreateArtifactInput,
+  UpdateArtifactInput,
+} from "../validators/artifact.validator.js";
 
 // In-memory set to immediately halt in-flight jobs when deleted
 const abortedArtifacts = new Set<string>();
@@ -188,6 +191,48 @@ export async function deleteArtifactForWorkspace(
 
   // 3. Delete database record
   await deleteArtifactRecord(artifactId);
+}
+
+/**
+ * Updates an artifact's metadata or title after verifying user workspace access.
+ */
+export async function updateArtifactForWorkspace(
+  workspaceId: string,
+  artifactId: string,
+  userId: string,
+  data: UpdateArtifactInput,
+) {
+  await getWorkspaceByIdForUser(workspaceId, userId);
+
+  const existing = await findArtifactByIdAndWorkspaceId(
+    artifactId,
+    workspaceId,
+  );
+
+  if (!existing) {
+    throw new NotFoundError("Artifact not found");
+  }
+
+  let mergedMetadata: Prisma.InputJsonValue | undefined = undefined;
+  if (data.metadata !== undefined) {
+    if (
+      existing.metadata &&
+      typeof existing.metadata === "object" &&
+      !Array.isArray(existing.metadata)
+    ) {
+      mergedMetadata = {
+        ...(existing.metadata as Record<string, unknown>),
+        ...data.metadata,
+      } as Prisma.InputJsonValue;
+    } else {
+      mergedMetadata = data.metadata as Prisma.InputJsonValue;
+    }
+  }
+
+  return updateArtifactRecord(artifactId, {
+    ...(data.title !== undefined ? { title: data.title } : {}),
+    ...(mergedMetadata !== undefined ? { metadata: mergedMetadata } : {}),
+  });
 }
 
 /**

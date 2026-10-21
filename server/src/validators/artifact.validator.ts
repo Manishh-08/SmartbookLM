@@ -21,3 +21,10 @@ export const createArtifactSchema = z.object({
 });
 
 export type CreateArtifactInput = z.infer<typeof createArtifactSchema>;
+
+export const updateArtifactSchema = z.object({
+  title: z.string().trim().min(1).max(120).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type UpdateArtifactInput = z.infer<typeof updateArtifactSchema>;

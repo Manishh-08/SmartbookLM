@@ -4,12 +4,14 @@ import {
   deleteArtifactForWorkspace,
   getArtifactForWorkspace,
   listArtifactsForWorkspace,
+  updateArtifactForWorkspace,
 } from "../services/artifact.services.js";
 import { ValidationError } from "../types/app-error.js";
 import { getZodFieldErrors } from "../utils/zod-error.js";
 import {
   artifactIdParamSchema,
   createArtifactSchema,
+  updateArtifactSchema,
 } from "../validators/artifact.validator.js";
 import { workspaceIdParamSchema } from "../validators/workspace.validator.js";
 
@@ -84,4 +86,27 @@ export async function deleteArtifact(req: Request, res: Response) {
     req.session.user.id,
   );
   res.status(204).send();
+}
+
+function parseUpdateBody(body: unknown) {
+  const parsed = updateArtifactSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new ValidationError(
+      "Validation failed",
+      getZodFieldErrors(parsed.error),
+    );
+  }
+  return parsed.data;
+}
+
+export async function updateArtifact(req: Request, res: Response) {
+  const { workspaceId, artifactId } = parseArtifactParams(req.params);
+  const input = parseUpdateBody(req.body);
+  const artifact = await updateArtifactForWorkspace(
+    workspaceId,
+    artifactId,
+    req.session.user.id,
+    input,
+  );
+  res.json(artifact);
 }
