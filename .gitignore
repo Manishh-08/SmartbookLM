@@ -11,6 +11,7 @@ pnpm-debug.log*
 dist/
 build/
 coverage/
+.next/
 
 .DS_Store
 *.log

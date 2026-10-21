@@ -20,3 +20,9 @@ export const createConversationSchema = z.object({
 });
 
 export type CreateConversationInput = z.infer<typeof createConversationSchema>;
+
+export const updateConversationSchema = z.object({
+  title: z.string().trim().min(1, "Title cannot be empty").max(120, "Title is too long"),
+});
+
+export type UpdateConversationInput = z.infer<typeof updateConversationSchema>;

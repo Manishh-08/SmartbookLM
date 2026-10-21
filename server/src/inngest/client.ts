@@ -11,6 +11,14 @@ export type SourceCreatedEvent = {
   };
 };
 
+export type SourceCancelEvent = {
+  name: "source/cancel";
+  data: {
+    sourceId: string;
+    workspaceId: string;
+  };
+};
+
 export type ArtifactGenerateEvent = {
   name: "artifact/generate";
   data: {
@@ -37,6 +45,7 @@ export type ConversationSummarizeEvent = {
 
 export type InngestEvents =
   | SourceCreatedEvent
+  | SourceCancelEvent
   | ArtifactGenerateEvent
   | ArtifactCancelEvent
   | ConversationSummarizeEvent;

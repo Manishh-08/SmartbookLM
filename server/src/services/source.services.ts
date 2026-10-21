@@ -2,7 +2,7 @@ import type { Prisma } from "../generated/prisma/client.js";
 import { uploadPdfToCloudinary } from "../lib/cloudinary.js";
 import { scrapeWebsite } from "../lib/firecrawl.js";
 import { extractPdfFromBuffer } from "../lib/pdf.js";
-import { enqueueSourceProcessing } from "../lib/source-events.js";
+import { enqueueSourceProcessing, cancelSourceProcessing } from "../lib/source-events.js";
 import { fetchYoutubeTranscript } from "../lib/youtube.js";
 
 import {
@@ -15,7 +15,7 @@ import {
 import { NotFoundError } from "../types/app-error.js";
 import { CreateSourceInput, ImportWebsiteInput, ImportYoutubeInput, ListSourcesQuery } from "../validators/source.validator.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
-import { removeSourceFromIndex } from "./source-processing.services.js";
+import { removeSourceFromIndex, abortSourceProcessing } from "./source-processing.services.js";
 
 async function assertWorkspaceAccess(workspaceId: string, userId: string) {
     await getWorkspaceByIdForUser(workspaceId, userId);
@@ -70,6 +70,17 @@ export async function deleteSourceForWorkspace(
     userId: string,
 ) {
     await getSourceForWorkspace(workspaceId, sourceId, userId);
+
+    // Halt in-flight processing immediately
+    abortSourceProcessing(sourceId);
+
+    // Cancel Inngest background job if currently queued or executing
+    try {
+        await cancelSourceProcessing({ sourceId, workspaceId });
+    } catch (inngestError) {
+        console.warn("Inngest cancellation failed:", inngestError);
+    }
+
     try {
         await removeSourceFromIndex(workspaceId, sourceId);
     } catch (error) {

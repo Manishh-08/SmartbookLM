@@ -19,10 +19,19 @@ import {
   PanelLeft,
   PanelRight,
   ArrowRight,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +50,7 @@ import {
   deleteConversation,
   getConversationMessages,
   getConversations,
+  updateConversation,
 } from "@/lib/api";
 import type { Conversation } from "@/lib/types";
 
@@ -106,6 +116,27 @@ export function ChatPanel({
         setActiveConversationId(undefined);
         setMessages([]);
       }
+    },
+  });
+
+  const [renamingConv, setRenamingConv] = useState<Conversation | null>(null);
+  const [newTitle, setNewTitle] = useState("");
+
+  const renameConvMutation = useMutation({
+    mutationFn: ({
+      convId,
+      title,
+    }: {
+      convId: string;
+      title: string;
+    }) => updateConversation(workspaceId, convId, { title }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Conversation[]>(
+        ["conversations", workspaceId],
+        (prev = []) => prev.map((c) => (c.id === updated.id ? updated : c)),
+      );
+      setRenamingConv(null);
+      setNewTitle("");
     },
   });
 
@@ -398,18 +429,33 @@ export function ChatPanel({
                           {conv.title || "Untitled Chat"}
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        className="h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 transition hover:text-destructive hover:bg-destructive/10 shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          deleteConvMutation.mutate(conv.id);
-                        }}
-                        title="Delete chat"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition">
+                        <button
+                          type="button"
+                          className="h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setRenamingConv(conv);
+                            setNewTitle(conv.title || "");
+                          }}
+                          title="Rename chat"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          className="h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            deleteConvMutation.mutate(conv.id);
+                          }}
+                          title="Delete chat"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </DropdownMenuItem>
                   );
                 })
@@ -509,8 +555,11 @@ export function ChatPanel({
             </div>
           </div>
         ) : (
-          messages.map((message) => {
+          messages.map((message, idx) => {
             const isUser = message.role === "user";
+            const isLastMessage = idx === messages.length - 1;
+            const isThinking = !isUser && isLoading && isLastMessage && !message.content;
+
             return (
               <div
                 key={message.id}
@@ -533,6 +582,12 @@ export function ChatPanel({
                 >
                   {isUser ? (
                     <p className="whitespace-pre-wrap text-[15px] sm:text-base">{message.content}</p>
+                  ) : isThinking ? (
+                    <div className="flex items-center gap-1.5 py-1.5 px-1 min-h-[24px]">
+                      <span className="h-2 w-2 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.32s]" />
+                      <span className="h-2 w-2 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.16s]" />
+                      <span className="h-2 w-2 rounded-full bg-primary/70 animate-bounce" />
+                    </div>
                   ) : (
                     <div className="markdown-content">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -552,19 +607,22 @@ export function ChatPanel({
           })
         )}
 
-        {isLoading && (
-          <div className="flex gap-3 text-sm items-center text-muted-foreground">
-            <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <Bot className="h-5 w-5" />
+        {isLoading &&
+          (messages.length === 0 ||
+            messages[messages.length - 1].role === "user") && (
+            <div className="flex gap-3 text-base justify-start">
+              <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                <Bot className="h-5 w-5" />
+              </div>
+              <div className="rounded-2xl px-4 sm:px-5 py-3 bg-muted/40 border rounded-tl-xs text-foreground shadow-2xs">
+                <div className="flex items-center gap-1.5 py-1.5 px-1 min-h-[24px]">
+                  <span className="h-2 w-2 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.32s]" />
+                  <span className="h-2 w-2 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.16s]" />
+                  <span className="h-2 w-2 rounded-full bg-primary/70 animate-bounce" />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-muted/40 border shadow-2xs">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <span className="text-sm font-medium">
-                Consulting sources and generating response...
-              </span>
-            </div>
-          </div>
-        )}
+          )}
 
         <div ref={messagesEndRef} />
       </div>
@@ -609,6 +667,64 @@ export function ChatPanel({
           support.
         </p>
       </div>
+
+      {/* Rename Chat Modal */}
+      <Dialog
+        open={!!renamingConv}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRenamingConv(null);
+            setNewTitle("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold">Rename Chat</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const trimmed = newTitle.trim();
+              if (!renamingConv || !trimmed) return;
+              renameConvMutation.mutate({
+                convId: renamingConv.id,
+                title: trimmed,
+              });
+            }}
+            className="space-y-4 pt-2"
+          >
+            <Input
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Enter new chat title..."
+              autoFocus
+              maxLength={120}
+              className="text-sm rounded-lg"
+            />
+            <DialogFooter className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setRenamingConv(null);
+                  setNewTitle("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!newTitle.trim() || renameConvMutation.isPending}
+              >
+                {renameConvMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

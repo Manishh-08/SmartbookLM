@@ -219,6 +219,20 @@ export async function getConversationMessages(
   );
 }
 
+export async function updateConversation(
+  workspaceId: string,
+  conversationId: string,
+  data: { title: string },
+): Promise<Conversation> {
+  return request<Conversation>(
+    `/api/workspaces/${workspaceId}/conversations/${conversationId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    },
+  );
+}
+
 export async function deleteConversation(
   workspaceId: string,
   conversationId: string,

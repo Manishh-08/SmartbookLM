@@ -56,7 +56,23 @@ export function SourcesPanel({
 
   const deleteMutation = useMutation({
     mutationFn: (sourceId: string) => deleteSource(workspaceId, sourceId),
-    onSuccess: () => {
+    onMutate: async (deletedSourceId: string) => {
+      await queryClient.cancelQueries({ queryKey: ["sources", workspaceId] });
+      const previousSources = queryClient.getQueryData<Source[]>(["sources", workspaceId]);
+      if (previousSources) {
+        queryClient.setQueryData<Source[]>(
+          ["sources", workspaceId],
+          previousSources.filter((s) => s.id !== deletedSourceId),
+        );
+      }
+      return { previousSources };
+    },
+    onError: (_err, _deletedSourceId, context) => {
+      if (context?.previousSources) {
+        queryClient.setQueryData(["sources", workspaceId], context.previousSources);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["sources", workspaceId] });
     },
   });

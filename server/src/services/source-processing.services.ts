@@ -34,6 +34,21 @@ type SourceMetadata = {
   indexedAt?: string;
 };
 
+// In-memory set to immediately halt in-flight source processing when deleted
+const abortedSources = new Set<string>();
+
+export function abortSourceProcessing(sourceId: string) {
+  abortedSources.add(sourceId);
+}
+
+export function isSourceProcessingAborted(sourceId: string) {
+  return abortedSources.has(sourceId);
+}
+
+export function clearAbortedSource(sourceId: string) {
+  abortedSources.delete(sourceId);
+}
+
 async function extractSourceText(source: SourceRecord) {
   const text = source.content?.trim();
   if (text) {
@@ -70,7 +85,14 @@ async function extractSourceText(source: SourceRecord) {
   throw new Error(`Source ${source.id} has no extractable content`);
 }
 
-export function markSourceProcessing(sourceId: string) {
+export async function markSourceProcessing(sourceId: string) {
+  if (isSourceProcessingAborted(sourceId)) {
+    return null;
+  }
+  const source = await findSourceById(sourceId);
+  if (!source) {
+    return null;
+  }
   return updateSourceRecord(sourceId, { status: "PROCESSING" });
 }
           
@@ -79,6 +101,10 @@ export async function markSourceFailed(
   error: unknown,
   existingMetadata: SourceRecord["metadata"],
 ) {
+  if (isSourceProcessingAborted(sourceId)) {
+    return null;
+  }
+
   const message =
     error instanceof Error ? error.message : "Source processing failed";
 
@@ -99,12 +125,23 @@ export async function markSourceFailed(
 }
 
 export async function extractSourceContent(sourceId: string) {
+  if (isSourceProcessingAborted(sourceId)) {
+    return null;
+  }
   const source = await findSourceById(sourceId);
   if (!source) {
-    throw new Error("Source not found");
+    return null;
   }
 
   const extracted = await extractSourceText(source);
+  if (isSourceProcessingAborted(sourceId)) {
+    return null;
+  }
+  const stillExists = await findSourceById(sourceId);
+  if (!stillExists) {
+    return null;
+  }
+
   const metadata =
     source.metadata &&
       typeof source.metadata === "object" &&
@@ -134,12 +171,27 @@ export async function chunkSourceContent(
   text: string,
   pages?: string[],
 ) {
+  if (isSourceProcessingAborted(sourceId)) {
+    return [];
+  }
+  const source = await findSourceById(sourceId);
+  if (!source) {
+    return [];
+  }
+
   await deleteChunksBySourceId(sourceId);
+  if (isSourceProcessingAborted(sourceId)) {
+    return [];
+  }
 
   const chunks = pages?.length ? chunkPages(pages) : chunkText(text);
 
   if (chunks.length === 0) {
     throw new Error("No chunks were generated from source content");
+  }
+
+  if (isSourceProcessingAborted(sourceId)) {
+    return [];
   }
 
   return createSourceChunks(
@@ -186,19 +238,32 @@ export async function listChunksForSource(sourceId: string) {
  * @param chunks - Chunk rows already saved in Postgres (must have `id`)
  * @returns Updated source record with status `READY`
  *
- *
  */
 
 export async function embedAndIndexSource(
   source: SourceRecord,
   chunks: SourceChunkRecord[],
 ) {
+  if (isSourceProcessingAborted(source.id)) {
+    return null;
+  }
+  const existingSource = await findSourceById(source.id);
+  if (!existingSource) {
+    return null;
+  }
+
   const batchSize = 50;
   const records: PineconeRecord<VectorMetadata>[] = [];
 
   for (let i = 0; i < chunks.length; i += batchSize) {
+    if (isSourceProcessingAborted(source.id)) {
+      return null;
+    }
     const batch = chunks.slice(i, i + batchSize);
     const embeddings = await embedTexts(batch.map((chunk) => chunk.content));
+    if (isSourceProcessingAborted(source.id)) {
+      return null;
+    }
 
     for (let j = 0; j < batch.length; j += 1) {
       const chunk = batch[j]!;
@@ -228,8 +293,20 @@ export async function embedAndIndexSource(
       });
     }
   }
+
+  if (isSourceProcessingAborted(source.id)) {
+    return null;
+  }
+  const checkSource = await findSourceById(source.id);
+  if (!checkSource) {
+    return null;
+  }
   
   await upsertSourceVectors(source.workspaceId, records);
+
+  if (isSourceProcessingAborted(source.id)) {
+    return null;
+  }
 
   const metadata =
     source.metadata &&

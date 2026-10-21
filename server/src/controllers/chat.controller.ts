@@ -6,6 +6,7 @@ import {
   getConversationMessagesForWorkspace,
   listConversationsForWorkspace,
   streamWorkspaceChat,
+  updateConversationForWorkspace,
 } from "../services/chat.services.js";
 import { ValidationError } from "../types/app-error.js";
 import { getZodFieldErrors } from "../utils/zod-error.js";
@@ -13,6 +14,7 @@ import {
   chatBodySchema,
   conversationIdParamSchema,
   createConversationSchema,
+  updateConversationSchema,
 } from "../validators/chat.validator.js";
 import { workspaceIdParamSchema } from "../validators/workspace.validator.js";
 
@@ -110,4 +112,27 @@ export async function deleteConversation(req: Request, res: Response) {
     req.session.user.id,
   );
   res.status(204).send();
+}
+
+function parseUpdateConversationBody(body: unknown) {
+  const parsed = updateConversationSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new ValidationError(
+      "Invalid conversation payload",
+      getZodFieldErrors(parsed.error),
+    );
+  }
+  return parsed.data;
+}
+
+export async function updateConversation(req: Request, res: Response) {
+  const { workspaceId, conversationId } = parseConversationParams(req.params);
+  const input = parseUpdateConversationBody(req.body);
+  const updated = await updateConversationForWorkspace(
+    workspaceId,
+    conversationId,
+    req.session.user.id,
+    input.title,
+  );
+  res.json(updated);
 }

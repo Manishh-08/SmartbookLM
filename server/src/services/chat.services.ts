@@ -146,6 +146,36 @@ export async function deleteConversationForWorkspace(
 }
 
 /**
+ * Renames a conversation.
+ *
+ * @param workspaceId - Workspace the conversation belongs to
+ * @param conversationId - Conversation to rename
+ * @param userId - Authenticated user's id
+ * @param title - New display title
+ * @returns Updated conversation record
+ * @throws {NotFoundError} When the conversation does not exist
+ */
+export async function updateConversationForWorkspace(
+  workspaceId: string,
+  conversationId: string,
+  userId: string,
+  title: string,
+) {
+  await getWorkspaceByIdForUser(workspaceId, userId);
+
+  const conversation = await findConversationByIdAndWorkspaceId(
+    conversationId,
+    workspaceId,
+  );
+
+  if (!conversation) {
+    throw new NotFoundError("Conversation not found");
+  }
+
+  return updateConversationRecord(conversationId, { title });
+}
+
+/**
  * Finds an existing conversation or creates one from the first user message.
  *
  * @param workspaceId - Workspace scope
