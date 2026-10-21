@@ -48,6 +48,10 @@ export function errorHandler(
         return;
     }
 
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Unhandled server error:", error);
+    const message =
+        error instanceof Error && error.message
+            ? error.message
+            : "Internal server error";
+    res.status(500).json({ error: message });
 }

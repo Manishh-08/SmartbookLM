@@ -1,3 +1,4 @@
+import type { Prisma } from "../generated/prisma/client.js";
 import { uploadPdfToCloudinary } from "../lib/cloudinary.js";
 import { scrapeWebsite } from "../lib/firecrawl.js";
 import { extractPdfFromBuffer } from "../lib/pdf.js";
@@ -23,12 +24,16 @@ async function assertWorkspaceAccess(workspaceId: string, userId: string) {
 async function createAndProcessSource(
     data: Parameters<typeof createSourceRecord>[0],
 ) {
-    const source = await createSourceRecord(data); //
+    const source = await createSourceRecord(data);
 
-    await enqueueSourceProcessing({
-        sourceId: source.id,
-        workspaceId: source.workspaceId,
-    });
+    try {
+        await enqueueSourceProcessing({
+            sourceId: source.id,
+            workspaceId: source.workspaceId,
+        });
+    } catch (inngestError) {
+        console.warn("Inngest background processing enqueue failed:", inngestError);
+    }
 
     return source;
 }
@@ -144,8 +149,21 @@ export async function uploadPdfSource(
         const extracted = await extractPdfFromBuffer(file.buffer);
         content = extracted.text;
         pageCount = extracted.pageCount;
-    } catch {
+    } catch (extractError) {
+        console.warn("Direct PDF buffer extraction failed at upload time:", extractError);
         // Inngest will retry extraction from Cloudinary if upload-time parse fails.
+    }
+
+    const metadata: Record<string, unknown> = {
+        fileUrl: upload.secureUrl,
+        fileName: upload.originalFilename,
+        fileSize: upload.bytes,
+        publicId: upload.publicId,
+        resourceType: upload.resourceType,
+    };
+
+    if (typeof pageCount === "number") {
+        metadata.pageCount = pageCount;
     }
 
     return createAndProcessSource({
@@ -153,15 +171,8 @@ export async function uploadPdfSource(
         type: "PDF",
         title: title?.trim() || file.originalname.replace(/\.pdf$/i, ""),
         content,
-        status: "PENDING",
-        metadata: {
-            fileUrl: upload.secureUrl,
-            fileName: upload.originalFilename,
-            fileSize: upload.bytes,
-            publicId: upload.publicId,
-            resourceType: upload.resourceType,
-            pageCount,
-        },
+        status: content ? "READY" : "PENDING",
+        metadata: metadata as Prisma.InputJsonValue,
     });
 }
 

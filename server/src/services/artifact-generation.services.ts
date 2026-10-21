@@ -82,17 +82,15 @@ export async function gatherSourceContext(
   workspaceId: string,
   sourceIds?: string[],
 ) {
-  const sources = await findSourcesByWorkspaceId(workspaceId, {
-    status: "READY",
-  });
+  const allSources = await findSourcesByWorkspaceId(workspaceId);
 
   const selected = sourceIds?.length
-    ? sources.filter((source) => sourceIds.includes(source.id))
-    : sources;
+    ? allSources.filter((source) => sourceIds.includes(source.id))
+    : allSources;
 
   if (selected.length === 0) {
     throw new ValidationError(
-      "No ready sources found. Add and process sources before generating learning tools.",
+      "No sources found. Add sources before generating learning tools.",
     );
   }
 
@@ -103,7 +101,7 @@ export async function gatherSourceContext(
 
   if (withContent.length === 0) {
     throw new ValidationError(
-      "Selected sources have no extracted content yet.",
+      "Selected sources have no extracted content yet. Please wait for indexing to finish.",
     );
   }
 

@@ -105,9 +105,18 @@ export async function createArtifactForWorkspace(
     status: "PENDING",
   });
 
-  await enqueueArtifactGeneration({
-    artifactId: artifact.id,
-    workspaceId,
+  try {
+    await enqueueArtifactGeneration({
+      artifactId: artifact.id,
+      workspaceId,
+    });
+  } catch (err) {
+    console.warn("Inngest enqueue failed:", err);
+  }
+
+  // Trigger background generation so it never stalls if Inngest worker is offline
+  void processArtifactById(artifact.id).catch((err) => {
+    console.error("Async artifact generation error:", err);
   });
 
   return artifact;
@@ -172,7 +181,6 @@ export async function processArtifactById(artifactId: string) {
       content: content as Prisma.InputJsonValue,
       metadata: {
         generatedAt: new Date().toISOString(),
-        processingError: undefined,
       },
     });
   } catch (error) {
