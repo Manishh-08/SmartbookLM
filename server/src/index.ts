@@ -10,20 +10,41 @@ import { serve } from "inngest/express";
 import {functions} from "./inngest/index.js"
 
 
-const allowedOrigins = Array.from(
-  new Set([
-    "http://localhost:3000",
-    "http://localhost:3001",
-    ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
-  ]),
-);
+const clientUrls = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((url) => url.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  ...clientUrls,
+];
 
 const PORT = process.env.PORT || 8081;
 const app = express();
 
+// Trust reverse proxy headers from Render/Cloudflare/etc.
+app.set("trust proxy", true);
+
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        origin.includes("localhost") ||
+        (clientUrls.length > 0 && clientUrls.some((u) => origin === u));
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
   })
 );

@@ -81,7 +81,7 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
   const handleGoogleSignIn = async () => {
     await signIn.social({
       provider: "google",
-      callbackURL: window.location.href,
+      callbackURL: window.location.origin,
     });
   };
 
