@@ -37,7 +37,7 @@ async function waitForIndexReady(name: string) {
   const client = getPineconeClient();
 
   for (let attempt = 0; attempt < 30; attempt += 1) {
-    const description = await client.indexes.describe(name);
+    const description = await client.describeIndex(name);
     if (description.status?.ready) {
       return;
     }
@@ -59,11 +59,11 @@ export async function ensurePineconeIndex() {
   }
 
   const client = getPineconeClient();
-  const indexes = await client.indexes.list();
+  const indexes = await client.listIndexes();
   const exists = indexes.indexes?.some((index) => index.name === indexName);
 
   if (!exists) {
-    await client.indexes.create({
+    await client.createIndex({
       name: indexName,
       dimension: EMBEDDING_DIMENSIONS,
       metric: "cosine",
