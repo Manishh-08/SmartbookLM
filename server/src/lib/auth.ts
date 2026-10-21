@@ -2,12 +2,6 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./db.js";
 
-const isProduction =
-  process.env.NODE_ENV === "production" ||
-  process.env.RENDER === "true" ||
-  !!process.env.RENDER_EXTERNAL_URL ||
-  (process.env.CLIENT_URL ? !process.env.CLIENT_URL.includes("localhost") : false);
-
 const clientUrls = (process.env.CLIENT_URL || "")
   .split(",")
   .map((url) => url.trim().replace(/\/+$/, ""))
@@ -18,7 +12,6 @@ const trustedOrigins = Array.from(
     "http://localhost:3000",
     "http://localhost:3001",
     ...clientUrls,
-    "https://*.vercel.app",
   ]),
 );
 
