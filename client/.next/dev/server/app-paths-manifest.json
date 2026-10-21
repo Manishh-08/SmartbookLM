@@ -1,5 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/workspace/[id]/page": "app/workspace/[id]/page.js",
-  "/workspace/[id]/studio/page": "app/workspace/[id]/studio/page.js"
-}
