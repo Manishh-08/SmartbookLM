@@ -129,14 +129,14 @@ export function CreateWorkspaceModal({
                   if (val) setDefaultModel(val);
                 }}
               >
-                <SelectTrigger id="model" className="w-full h-10 text-base sm:text-sm">
+                <SelectTrigger id="model" className="w-full h-10 text-xs sm:text-sm">
                   <SelectValue placeholder="Select AI model" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gpt-4o-mini">
+                  <SelectItem value="gpt-4o-mini" className="text-xs sm:text-sm">
                     GPT-4o Mini (Fast & Efficient)
                   </SelectItem>
-                  <SelectItem value="gpt-4o">
+                  <SelectItem value="gpt-4o" className="text-xs sm:text-sm">
                     GPT-4o (High Intelligence & Reasoning)
                   </SelectItem>
                 </SelectContent>

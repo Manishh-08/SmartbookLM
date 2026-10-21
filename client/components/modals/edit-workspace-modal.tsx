@@ -160,14 +160,14 @@ export function EditWorkspaceModal({
                 Default LLM Model
               </Label>
               <Select value={defaultModel} onValueChange={(v) => v && setDefaultModel(v)}>
-                <SelectTrigger id="edit-model" className="h-10 text-sm">
+                <SelectTrigger id="edit-model" className="h-10 text-xs sm:text-sm">
                   <SelectValue placeholder="Select model" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gpt-4o-mini">
+                  <SelectItem value="gpt-4o-mini" className="text-xs sm:text-sm">
                     GPT-4o Mini (Fast & Cost-Efficient)
                   </SelectItem>
-                  <SelectItem value="gpt-4o">
+                  <SelectItem value="gpt-4o" className="text-xs sm:text-sm">
                     GPT-4o (High Reasoning & Depth)
                   </SelectItem>
                 </SelectContent>
