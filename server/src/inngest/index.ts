@@ -59,6 +59,12 @@ export const generateArtifact = inngest.createFunction(
     id: "generate-artifact",
     retries: 2,
     triggers: [{ event: "artifact/generate" }],
+    cancelOn: [
+      {
+        event: "artifact/cancel",
+        match: "data.artifactId",
+      },
+    ],
   },
   async ({ event, step }) => {
     const { artifactId } = event.data;

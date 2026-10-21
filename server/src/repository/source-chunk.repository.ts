@@ -57,3 +57,19 @@ export function findChunksBySourceId(sourceId: string) {
     orderBy: { index: "asc" },
   });
 }
+
+export function findChunksBySourceIds(sourceIds: string[]) {
+  if (sourceIds.length === 0) {
+    return Promise.resolve([]);
+  }
+
+  return prisma.sourceChunk.findMany({
+    where: {
+      sourceId: {
+        in: sourceIds,
+      },
+    },
+    select: sourceChunkSelect,
+    orderBy: [{ sourceId: "asc" }, { index: "asc" }],
+  });
+}
