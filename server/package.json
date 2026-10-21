@@ -14,7 +14,7 @@
   "type": "module",
   "dependencies": {
     "@ai-sdk/openai": "^4.0.99",
-    "@pinecone-database/pinecone": "^9.0.0",
+    "@pinecone-database/pinecone": "^8.2.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@tavily/core": "^0.7.14",
