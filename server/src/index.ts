@@ -10,16 +10,23 @@ import { serve } from "inngest/express";
 import {functions} from "./inngest/index.js"
 
 
-const clientUrl = process.env.CLIENT_URL ?? "http://localhost:3001";
+const allowedOrigins = Array.from(
+  new Set([
+    "http://localhost:3000",
+    "http://localhost:3001",
+    ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
+  ]),
+);
+
 const PORT = process.env.PORT || 8081;
 const app = express();
 
 app.use(
   cors({
-    origin: clientUrl,
+    origin: allowedOrigins,
     credentials: true,
   })
-)
+);
 
 app.all('/api/auth/{*any}', toNodeHandler(auth));
 

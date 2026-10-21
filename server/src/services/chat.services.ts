@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { openaiProvider, resolveModelName } from "../lib/openai.js";
 import type { Response } from "express";
 import { z } from "zod";
 import {
@@ -213,8 +213,9 @@ export async function streamWorkspaceChat(
 ) {
   const workspace = await getWorkspaceByIdForUser(workspaceId, userId);
   const requestedModel = input.model ?? workspace.defaultModel;
-  const chatModel =
-    CHAT_MODELS.find((model) => model === requestedModel) ?? CHAT_MODEL;
+  const chatModel = resolveModelName(
+    CHAT_MODELS.find((model) => model === requestedModel) ?? CHAT_MODEL,
+  );
   const webSearchEnabled =
     input.webSearch === true && !!process.env.TAVILY_API_KEY?.trim();
 
@@ -291,7 +292,7 @@ export async function streamWorkspaceChat(
           : undefined;
 
       const result = streamText({
-        model: openai(chatModel),
+        model: openaiProvider(chatModel),
         system: systemPrompt,
         messages: await convertToModelMessages(contextMessages),
         tools,

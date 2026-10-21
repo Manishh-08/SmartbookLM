@@ -14,6 +14,7 @@ import {
 import { NotFoundError } from "../types/app-error.js";
 import { CreateSourceInput, ImportWebsiteInput, ImportYoutubeInput, ListSourcesQuery } from "../validators/source.validator.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
+import { removeSourceFromIndex } from "./source-processing.services.js";
 
 async function assertWorkspaceAccess(workspaceId: string, userId: string) {
     await getWorkspaceByIdForUser(workspaceId, userId);
@@ -64,6 +65,11 @@ export async function deleteSourceForWorkspace(
     userId: string,
 ) {
     await getSourceForWorkspace(workspaceId, sourceId, userId);
+    try {
+        await removeSourceFromIndex(workspaceId, sourceId);
+    } catch (error) {
+        console.error("Failed to remove source vectors from Pinecone:", error);
+    }
     await deleteSourceRecord(sourceId);
 }
 
@@ -86,13 +92,13 @@ export async function createTextOrMarkdownSource(
 ) {
     await assertWorkspaceAccess(workspaceId, userId);
 
-    // return createAndProcessSource({
-    //     workspaceId,
-    //     type: input.type,
-    //     title: input.title,
-    //     content: input.content,
-    //     status: "PENDING",
-    // });
+    return createAndProcessSource({
+        workspaceId,
+        type: input.type,
+        title: input.title,
+        content: input.content,
+        status: "PENDING",
+    });
 }
 
 
