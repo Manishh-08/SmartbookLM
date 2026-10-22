@@ -11,7 +11,7 @@ const trustedOrigins = Array.from(
 );
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:8081" ,
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:8081",
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins,
   database: prismaAdapter(prisma, {
@@ -23,4 +23,13 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
   },
+  advanced: {
+    // Required for cross-domain cookies between Vercel and Render
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+      httpOnly: true,
+      partitioned: true, // Helps with modern browser third-party cookie restrictions
+    },
+  }
 });
