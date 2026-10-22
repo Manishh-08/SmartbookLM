@@ -631,7 +631,7 @@ export function ChatPanel({
 
       {/* Input Form */}
       <div className="p-3 sm:p-4 border-t bg-card/40 shrink-0">
-        <form onSubmit={handleSubmit} className="flex items-end gap-2 max-w-4xl mx-auto">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2 sm:gap-2.5 max-w-4xl mx-auto">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -653,14 +653,13 @@ export function ChatPanel({
           />
           <Button
             type="submit"
-            size="icon"
             disabled={!input.trim() || isLoading}
-            className="h-12 w-12 rounded-xl shrink-0 flex items-center justify-center shadow-xs"
+            className="size-11 sm:size-12 rounded-xl shrink-0 flex items-center justify-center shadow-xs p-0"
           >
             {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="size-5 animate-spin" />
             ) : (
-              <Send className="h-5 w-5 -translate-y-px translate-x-px" />
+              <Send className="size-5 -translate-y-px translate-x-px" />
             )}
           </Button>
         </form>

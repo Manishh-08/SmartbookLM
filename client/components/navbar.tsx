@@ -95,8 +95,14 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    window.location.href = "/";
+    try {
+      await signOut();
+    } catch (err) {
+      console.error("Sign out error:", err);
+    } finally {
+      queryClient.clear();
+      window.location.href = "/";
+    }
   };
 
   const user = session?.user;
@@ -325,45 +331,52 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
               <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
             ) : user ? (
               <DropdownMenu>
-                <DropdownMenuTrigger className="relative h-9 w-9 rounded-full p-0 inline-flex items-center justify-center cursor-pointer outline-none ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                  <Avatar className="h-9 w-9 border">
-                    <AvatarImage src={user.image ?? ""} alt={user.name ?? ""} />
-                    <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
+                <DropdownMenuTrigger
+                  className="relative h-9 w-9 rounded-full p-0 inline-flex items-center justify-center cursor-pointer outline-none ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label="User profile menu"
+                >
+                  <Avatar className="h-9 w-9 border border-border shadow-2xs">
+                    <AvatarImage
+                      src={user.image ?? ""}
+                      alt={user.name ?? "User"}
+                      referrerPolicy="no-referrer"
+                    />
+                    <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+                      {initials}
+                    </AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-60 p-1.5" align="end">
-                  <DropdownMenuLabel className="font-normal px-2 py-1.5">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-semibold leading-none truncate">
-                        {user.name}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                <DropdownMenuContent className="w-64 p-1.5" align="end">
+                  <div className="px-2.5 py-2">
+                    <p className="text-sm font-bold text-foreground truncate">
+                      {user.name || "User"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {user.email || ""}
+                    </p>
+                  </div>
+                  <DropdownMenuSeparator className="my-1" />
                   <DropdownMenuItem
                     onClick={() => setMemoryOpen(true)}
-                    className="cursor-pointer gap-2.5 text-sm py-2"
+                    className="cursor-pointer gap-2.5 text-xs sm:text-sm py-2 rounded-lg"
                   >
                     <Brain className="h-4 w-4 text-primary" />
-                    AI Memory Knowledge
+                    <span>AI Memory Knowledge</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setCreateWorkspaceOpen(true)}
-                    className="cursor-pointer gap-2.5 text-sm py-2 md:hidden"
+                    className="cursor-pointer gap-2.5 text-xs sm:text-sm py-2 rounded-lg md:hidden"
                   >
-                    <Plus className="h-4 w-4" />
-                    New Workspace
+                    <Plus className="h-4 w-4 text-primary" />
+                    <span>New Workspace</span>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="my-1" />
                   <DropdownMenuItem
                     onClick={handleSignOut}
-                    className="cursor-pointer text-destructive focus:text-destructive gap-2.5 text-sm py-2"
+                    className="cursor-pointer text-destructive focus:text-destructive gap-2.5 text-xs sm:text-sm py-2 rounded-lg font-semibold"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign out
+                    <span>Log Out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -621,28 +634,34 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
 
               {/* Footer User Profile */}
               {user && (
-                <div className="p-3 border-t bg-muted/20 flex items-center justify-between gap-2 shrink-0">
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <Avatar className="h-8 w-8 border shrink-0">
-                      <AvatarImage src={user.image ?? ""} alt={user.name ?? ""} />
-                      <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
+                <div className="p-3 border-t bg-muted/20 space-y-2.5 shrink-0">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar className="h-9 w-9 border border-border shrink-0">
+                      <AvatarImage
+                        src={user.image ?? ""}
+                        alt={user.name ?? "User"}
+                        referrerPolicy="no-referrer"
+                      />
+                      <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+                        {initials}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold truncate text-foreground">{user.name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                      <p className="text-xs font-bold truncate text-foreground">{user.name || "User"}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{user.email || ""}</p>
                     </div>
                   </div>
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-center gap-2 text-xs font-semibold h-9 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 cursor-pointer"
                     onClick={() => {
                       setMobileSidebarOpen(false);
                       handleSignOut();
                     }}
-                    title="Sign out"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Log Out</span>
                   </Button>
                 </div>
               )}
