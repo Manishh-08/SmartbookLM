@@ -359,7 +359,7 @@ export function ChatPanel({
   return (
     <div className="flex flex-col h-full bg-background relative min-w-0 min-h-0 overflow-hidden">
       {/* Chat Header */}
-      <div className="h-14 px-3 sm:px-4 border-b flex items-center justify-between gap-2 bg-card/40 shrink-0 min-w-0">
+      <div className="h-13 sm:h-14 px-3 sm:px-4 border-b flex items-center justify-between gap-2 bg-card/40 shrink-0 min-w-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           {onToggleSources && (
             <Button
@@ -379,7 +379,7 @@ export function ChatPanel({
           )}
 
           <DropdownMenu>
-            <DropdownMenuTrigger className="h-8 gap-1.5 text-xs sm:text-sm max-w-[170px] sm:max-w-[220px] md:max-w-[280px] truncate font-medium border rounded-lg px-2.5 inline-flex items-center justify-between bg-background cursor-pointer hover:bg-muted/40 transition outline-none shadow-2xs">
+            <DropdownMenuTrigger className="h-8 gap-1.5 text-xs sm:text-sm max-w-[125px] min-[400px]:max-w-[170px] sm:max-w-[220px] md:max-w-[280px] truncate font-medium border rounded-lg px-2 sm:px-2.5 inline-flex items-center justify-between bg-background cursor-pointer hover:bg-muted/40 transition outline-none shadow-2xs">
               <div className="flex items-center gap-1.5 min-w-0">
                 <MessageSquare className="h-3.5 w-3.5 text-primary shrink-0" />
                 <span className="truncate">{activeConvTitle}</span>
@@ -499,7 +499,7 @@ export function ChatPanel({
               if (val) setSelectedModel(val);
             }}
           >
-            <SelectTrigger className="h-8 text-xs w-[115px] sm:w-[130px] bg-background rounded-lg shadow-2xs">
+            <SelectTrigger className="h-8 text-xs w-[105px] sm:w-[130px] bg-background rounded-lg shadow-2xs">
               <SelectValue placeholder="Model" />
             </SelectTrigger>
             <SelectContent align="end">
@@ -510,7 +510,7 @@ export function ChatPanel({
 
           <Link
             href={`/workspace/${workspaceId}/studio`}
-            className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 text-xs font-semibold transition shadow-2xs shrink-0"
+            className="h-8 px-2.5 hidden lg:inline-flex items-center gap-1.5 rounded-lg border bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 text-xs font-semibold transition shadow-2xs shrink-0"
             title="Open AI Studio"
           >
             <Sparkles className="h-3.5 w-3.5" />
@@ -664,7 +664,7 @@ export function ChatPanel({
             )}
           </Button>
         </form>
-        <p className="text-xs text-muted-foreground text-center mt-2">
+        <p className="text-xs text-muted-foreground text-center mt-2 hidden sm:block">
           Answers are synthesized strictly from workspace sources with citation
           support.
         </p>

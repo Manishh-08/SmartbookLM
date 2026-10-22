@@ -238,7 +238,7 @@ export default function WorkspaceStudioPage({
   });
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
+    <div className="fixed inset-0 flex flex-col h-dvh max-h-dvh overflow-hidden bg-background">
       <Navbar
         workspaceTitle={workspace?.title}
         workspaceId={workspaceId}
@@ -276,7 +276,7 @@ export default function WorkspaceStudioPage({
 
               <Link
                 href={`/workspace/${workspaceId}`}
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-muted hover:bg-muted/80 text-foreground transition shrink-0 self-start sm:self-auto border shadow-2xs"
+                className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-muted hover:bg-muted/80 text-foreground transition shrink-0 self-start sm:self-auto border shadow-2xs"
               >
                 <span>Open Chat</span>
                 <ArrowRight className="h-4 w-4" />

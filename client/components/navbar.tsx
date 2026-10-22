@@ -102,26 +102,26 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-xs">
-        <div className="flex h-16 items-center justify-between px-4 sm:px-6 md:px-8">
-          <div className="flex items-center gap-3 sm:gap-4">
+      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-xs shrink-0">
+        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6 md:px-8">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <Link
               href="/"
-              className="flex items-center gap-2.5 font-semibold tracking-tight transition hover:opacity-85"
+              className="flex items-center gap-2 sm:gap-2.5 font-semibold tracking-tight transition hover:opacity-85 shrink-0"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-                <BookOpen className="h-5 w-5" />
+              <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <span className="text-lg sm:text-xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/75 bg-clip-text">
+              <span className="text-base sm:text-xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/75 bg-clip-text hidden min-[360px]:inline">
                 SmartBook<span className="text-primary">LM</span>
               </span>
             </Link>
 
             {workspaceId ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-muted-foreground/30 hidden sm:inline">/</span>
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border bg-muted/40 hover:bg-muted text-xs sm:text-sm font-semibold text-foreground transition max-w-[150px] sm:max-w-[220px] shadow-2xs group cursor-pointer outline-none">
+                  <DropdownMenuTrigger className="flex items-center gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border bg-muted/40 hover:bg-muted text-xs sm:text-sm font-semibold text-foreground transition max-w-[120px] min-[400px]:max-w-[160px] sm:max-w-[220px] shadow-2xs group cursor-pointer outline-none">
                     <span className="text-sm shrink-0">{currentWorkspace?.icon || "📚"}</span>
                     <span className="truncate">{currentWorkspace?.title || workspaceTitle || "Workspace"}</span>
                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0 transition" />
@@ -244,7 +244,7 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
 
           {/* Workspace Tabs: Chat & Studio */}
           {workspaceId && (
-            <nav className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border shadow-2xs">
+            <nav className="hidden lg:flex items-center gap-1 bg-muted/60 p-1 rounded-xl border shadow-2xs">
               <Link
                 href={`/workspace/${workspaceId}`}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
@@ -270,7 +270,7 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
             </nav>
           )}
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {user && (
               <>
                 <Button
@@ -286,11 +286,11 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-2 text-sm h-9 px-3 text-muted-foreground hover:text-foreground font-medium"
+                  className="gap-1.5 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 text-muted-foreground hover:text-foreground font-medium"
                   onClick={() => setMemoryOpen(true)}
                   title="View AI Learned Memories"
                 >
-                  <Brain className="h-4 w-4 text-primary" />
+                  <Brain className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   <span className="hidden sm:inline">Memory</span>
                 </Button>
               </>

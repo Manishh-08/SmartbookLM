@@ -58,7 +58,7 @@ export default function WorkspacePage({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-screen">
+      <div className="fixed inset-0 flex flex-col h-dvh max-h-dvh bg-background">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -69,7 +69,7 @@ export default function WorkspacePage({
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="fixed inset-0 flex flex-col h-dvh max-h-dvh overflow-hidden bg-background">
       <Navbar
         workspaceTitle={workspace?.title}
         workspaceId={workspaceId}
@@ -144,8 +144,8 @@ export default function WorkspacePage({
             </TabsContent>
           </div>
 
-          <TabsList className="grid grid-cols-3 w-full rounded-none border-t h-14 bg-card/95 backdrop-blur-md px-2 py-1.5 gap-1.5 shadow-lg shrink-0">
-            <TabsTrigger value="sources" className="gap-2 text-xs sm:text-sm font-semibold rounded-xl h-11">
+          <TabsList className="grid grid-cols-3 w-full rounded-none border-t h-13 sm:h-14 bg-card/95 backdrop-blur-md px-2 py-1 gap-1.5 shadow-lg shrink-0 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+            <TabsTrigger value="sources" className="gap-2 text-xs sm:text-sm font-semibold rounded-lg h-10 sm:h-11">
               <FileText className="h-4 w-4 shrink-0" />
               <span>Sources</span>
               {selectedSourceIds.length > 0 && (
@@ -154,13 +154,13 @@ export default function WorkspacePage({
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="chat" className="gap-2 text-xs sm:text-sm font-semibold rounded-xl h-11">
+            <TabsTrigger value="chat" className="gap-2 text-xs sm:text-sm font-semibold rounded-lg h-10 sm:h-11">
               <MessageSquare className="h-4 w-4 shrink-0" />
               <span>Chat</span>
             </TabsTrigger>
             <Link
               href={`/workspace/${workspaceId}/studio`}
-              className="inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold rounded-xl h-11 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold rounded-lg h-10 sm:h-11 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition cursor-pointer"
             >
               <Sparkles className="h-4 w-4 shrink-0 text-primary" />
               <span>Studio</span>
