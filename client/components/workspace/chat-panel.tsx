@@ -70,7 +70,9 @@ interface ChatMessage {
 }
 
 const SERVER_URL =
-  process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:8081";
+  typeof window !== "undefined"
+    ? ""
+    : (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:8081").replace(/\/+$/, "");
 
 export function ChatPanel({
   workspaceId,

@@ -11,20 +11,42 @@ import {functions} from "./inngest/index.js"
 
 const PORT = process.env.PORT || 8081;
 const app = express();
-const clientUrl = process.env.CLIENT_URL ?? "http://localhost:3001";
+
+// Trust reverse proxy headers from Render/Cloudflare/etc. (must be before middlewares)
+app.set("trust proxy", true);
+
+const rawClientUrl = (process.env.CLIENT_URL || "").trim().replace(/\/+$/, "");
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://smartbook-lm.vercel.app",
+  ...(rawClientUrl ? [rawClientUrl] : []),
+];
 
 app.use(
   cors({
-      origin: clientUrl,
-      credentials: true,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        origin.includes("localhost") ||
+        (rawClientUrl && origin === rawClientUrl);
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
+    credentials: true,
   }),
 );
 
 app.all('/api/auth/{*any}', toNodeHandler(auth));
 
 app.use(express.json());
-
-app.set("trust proxy", 1);
 
 app.use("/api/inngest", serve({ client: inngest, functions }));
 

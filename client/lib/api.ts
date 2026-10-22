@@ -10,11 +10,15 @@ import type {
   Workspace,
 } from "./types.js";
 
-const BASE_URL = (
-  process.env.NEXT_PUBLIC_SERVER_URL ||
-  process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
-  "http://localhost:8081"
-).replace(/\/+$/, "");
+const BASE_URL =
+  typeof window !== "undefined"
+    ? ""
+    : (
+        process.env.BACKEND_URL ||
+        process.env.NEXT_PUBLIC_SERVER_URL ||
+        process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
+        "http://localhost:8081"
+      ).replace(/\/+$/, "");
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${BASE_URL}${path}`;

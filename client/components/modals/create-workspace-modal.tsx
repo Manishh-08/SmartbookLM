@@ -144,6 +144,14 @@ export function CreateWorkspaceModal({
             </div>
           </div>
 
+          {mutation.isError && (
+            <div className="mb-4 p-3 text-xs text-destructive bg-destructive/10 rounded-xl border border-destructive/20 font-medium">
+              {mutation.error instanceof Error
+                ? mutation.error.message
+                : "Failed to create workspace. Please try again."}
+            </div>
+          )}
+
           <DialogFooter className="gap-2 pt-2">
             <Button
               type="button"
