@@ -2,27 +2,16 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./db.js";
 
-const clientUrls = (process.env.CLIENT_URL || "")
-  .split(",")
-  .map((url) => url.trim().replace(/\/+$/, ""))
-  .filter(Boolean);
-
 const trustedOrigins = Array.from(
   new Set([
     "http://localhost:3000",
     "http://localhost:3001",
-    ...clientUrls,
+    "https://smartbook-lm.vercel.app",
   ]),
 );
 
-const betterAuthUrl = (
-  process.env.BETTER_AUTH_URL ||
-  process.env.RENDER_EXTERNAL_URL ||
-  "http://localhost:8081"
-).replace(/\/+$/, "");
-
 export const auth = betterAuth({
-  baseURL: betterAuthUrl,
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:8081" ,
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins,
   database: prismaAdapter(prisma, {
