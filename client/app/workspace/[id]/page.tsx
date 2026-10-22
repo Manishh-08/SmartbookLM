@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/navbar";
 import { SourcesPanel } from "@/components/workspace/sources-panel";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getWorkspace } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import { FileText, MessageSquare, Sparkles, Loader2 } from "lucide-react";
 
 export default function WorkspacePage({
@@ -22,6 +24,8 @@ export default function WorkspacePage({
 }) {
   const resolvedParams = use(params);
   const workspaceId = resolvedParams.id;
+  const router = useRouter();
+  const { data: session, isPending: isSessionPending } = useSession();
 
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
   const [mobileTab, setMobileTab] = useState<"sources" | "chat">("chat");
@@ -39,10 +43,25 @@ export default function WorkspacePage({
     } catch {}
   }, []);
 
-  const { data: workspace, isLoading } = useQuery({
+  const {
+    data: workspace,
+    isLoading: isWorkspaceLoading,
+    isError: isWorkspaceError,
+  } = useQuery({
     queryKey: ["workspace", workspaceId],
     queryFn: () => getWorkspace(workspaceId),
+    enabled: !!session?.user,
+    retry: false,
   });
+
+  // Redirect to landing page if user is not logged in or not authorized for this workspace
+  useEffect(() => {
+    if (!isSessionPending) {
+      if (!session?.user || isWorkspaceError) {
+        router.replace("/");
+      }
+    }
+  }, [isSessionPending, session, isWorkspaceError, router]);
 
   const handleToggleSource = (sourceId: string) => {
     setSelectedSourceIds((prev) =>
@@ -56,13 +75,17 @@ export default function WorkspacePage({
     setSelectedSourceIds(allIds);
   };
 
-  if (isLoading) {
+  if (isSessionPending || !session?.user || isWorkspaceLoading || isWorkspaceError) {
     return (
       <div className="fixed inset-0 flex flex-col h-dvh max-h-dvh bg-background">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <p className="text-sm font-medium">Loading workspace...</p>
+          <p className="text-sm font-medium">
+            {!isSessionPending && (!session?.user || isWorkspaceError)
+              ? "Redirecting to landing page..."
+              : "Loading workspace..."}
+          </p>
         </div>
       </div>
     );

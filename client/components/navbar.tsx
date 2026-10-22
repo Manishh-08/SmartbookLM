@@ -16,6 +16,7 @@ import {
   Trash2,
   FolderKanban,
   Loader2,
+  Menu,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession, signIn, signOut } from "@/lib/auth-client";
@@ -38,6 +39,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { useState } from "react";
 import { MemoryModal } from "@/components/modals/memory-modal";
 import { CreateWorkspaceModal } from "@/components/modals/create-workspace-modal";
@@ -59,6 +67,7 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
   const [editWorkspaceOpen, setEditWorkspaceOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Fetch workspaces for switcher
   const { data: workspaces = [] } = useQuery({
@@ -105,6 +114,19 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-xs shrink-0">
         <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6 md:px-8">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            {/* Mobile Workspace Sidebar Button */}
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="sm:hidden h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground -ml-1"
+                onClick={() => setMobileSidebarOpen(true)}
+                aria-label="Open Workspace Menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+
             <Link
               href="/"
               className="flex items-center gap-2 sm:gap-2.5 font-semibold tracking-tight transition hover:opacity-85 shrink-0"
@@ -112,16 +134,17 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
               <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
                 <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <span className="text-base sm:text-xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/75 bg-clip-text hidden min-[360px]:inline">
+              <span className="text-base sm:text-xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/75 bg-clip-text">
                 SmartBook<span className="text-primary">LM</span>
               </span>
             </Link>
 
+            {/* Desktop Workspace Dropdown (hidden on mobile for cleaner navbar) */}
             {workspaceId ? (
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-muted-foreground/30 hidden sm:inline">/</span>
+              <div className="hidden sm:flex items-center gap-1.5 min-w-0">
+                <span className="text-muted-foreground/30">/</span>
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl border bg-muted/40 hover:bg-muted text-xs sm:text-sm font-semibold text-foreground transition max-w-[120px] min-[400px]:max-w-[160px] sm:max-w-[220px] shadow-2xs group cursor-pointer outline-none">
+                  <DropdownMenuTrigger className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border bg-muted/40 hover:bg-muted text-xs sm:text-sm font-semibold text-foreground transition max-w-[160px] sm:max-w-[220px] shadow-2xs group cursor-pointer outline-none">
                     <span className="text-sm shrink-0">{currentWorkspace?.icon || "📚"}</span>
                     <span className="truncate">{currentWorkspace?.title || workspaceTitle || "Workspace"}</span>
                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0 transition" />
@@ -347,11 +370,11 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
             ) : (
               <Button
                 size="sm"
-                className="gap-2 h-9 text-sm font-medium px-4 rounded-xl"
+                className="gap-2 h-9 text-sm font-medium px-3.5 sm:px-4 rounded-xl"
                 onClick={handleGoogleSignIn}
               >
                 <LogIn className="h-4 w-4" />
-                Sign in with Google
+                <span>Sign In</span>
               </Button>
             )}
           </div>
@@ -413,6 +436,218 @@ export function Navbar({ workspaceTitle, workspaceId }: NavbarProps) {
               </DialogContent>
             </Dialog>
           )}
+          {/* Mobile Workspace Navigation Sidebar */}
+          <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+            <SheetContent side="left" className="w-[85vw] max-w-xs p-0 flex flex-col bg-background h-full">
+              <SheetHeader className="p-4 border-b flex flex-col gap-1 pr-12">
+                <SheetTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                    <BookOpen className="h-4 w-4" />
+                  </div>
+                  <span>SmartBook<span className="text-primary">LM</span></span>
+                </SheetTitle>
+                <SheetDescription className="sr-only">Workspace Navigation Sidebar</SheetDescription>
+              </SheetHeader>
+
+              <div className="flex-1 overflow-y-auto p-3 space-y-4">
+                {/* Current Workspace Card */}
+                {workspaceId && currentWorkspace && (
+                  <div className="p-3 rounded-2xl border bg-muted/30 space-y-3">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Current Workspace
+                    </p>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl shrink-0">{currentWorkspace.icon || "📚"}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-foreground truncate">
+                          {currentWorkspace.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {currentWorkspace.description || "No description"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 pt-1 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs gap-1.5 justify-start text-foreground hover:bg-muted"
+                        onClick={() => {
+                          setMobileSidebarOpen(false);
+                          setEditWorkspaceOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-primary" />
+                        <span>Rename</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs gap-1.5 justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setMobileSidebarOpen(false);
+                          setDeleteConfirmOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Delete</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Workspace Navigation Links */}
+                {workspaceId && (
+                  <div className="space-y-1">
+                    <p className="px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                      Navigation
+                    </p>
+                    <Link
+                      href={`/workspace/${workspaceId}`}
+                      onClick={() => setMobileSidebarOpen(false)}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition ${
+                        !isStudio
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span>Chat & Sources</span>
+                    </Link>
+                    <Link
+                      href={`/workspace/${workspaceId}/studio`}
+                      onClick={() => setMobileSidebarOpen(false)}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition ${
+                        isStudio
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    >
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span>Study Studio</span>
+                    </Link>
+                  </div>
+                )}
+
+                {/* Switch Workspace */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between px-2">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Workspaces
+                    </p>
+                    <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">
+                      {workspaces.length} total
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 max-h-52 overflow-y-auto">
+                    {workspaces.map((ws) => {
+                      const isCurrent = ws.id === workspaceId;
+                      return (
+                        <button
+                          key={ws.id}
+                          type="button"
+                          onClick={() => {
+                            setMobileSidebarOpen(false);
+                            if (!isCurrent) {
+                              router.push(`/workspace/${ws.id}`);
+                            }
+                          }}
+                          className={`w-full flex items-center justify-between gap-2 py-2 px-3 rounded-xl text-sm transition cursor-pointer text-left ${
+                            isCurrent
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "text-foreground hover:bg-muted/60"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <span className="text-base shrink-0">{ws.icon || "📚"}</span>
+                            <span className="truncate">{ws.title}</span>
+                          </div>
+                          {isCurrent && (
+                            <Check className="h-4 w-4 shrink-0 text-primary" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-1.5 space-y-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start gap-2 text-xs font-semibold h-9 rounded-xl"
+                      onClick={() => {
+                        setMobileSidebarOpen(false);
+                        setCreateWorkspaceOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 text-primary" />
+                      <span>Create New Workspace</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground h-9 rounded-xl"
+                      onClick={() => {
+                        setMobileSidebarOpen(false);
+                        router.push("/");
+                      }}
+                    >
+                      <FolderKanban className="h-4 w-4" />
+                      <span>All Workspaces (Dashboard)</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* AI Tools */}
+                <div className="space-y-1 pt-2 border-t">
+                  <p className="px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                    AI Tools
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileSidebarOpen(false);
+                      setMemoryOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition cursor-pointer text-left"
+                  >
+                    <Brain className="h-4 w-4 text-primary" />
+                    <span>AI Memory Knowledge</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Footer User Profile */}
+              {user && (
+                <div className="p-3 border-t bg-muted/20 flex items-center justify-between gap-2 shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <Avatar className="h-8 w-8 border shrink-0">
+                      <AvatarImage src={user.image ?? ""} alt={user.name ?? ""} />
+                      <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold truncate text-foreground">{user.name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                    onClick={() => {
+                      setMobileSidebarOpen(false);
+                      handleSignOut();
+                    }}
+                    title="Sign out"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
         </>
       )}
     </>

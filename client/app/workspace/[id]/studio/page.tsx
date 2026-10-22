@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navbar } from "@/components/navbar";
 import {
@@ -15,6 +16,7 @@ import {
   getSources,
   getWorkspace,
 } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import type {
   ArtifactType,
   LearningArtifact,
@@ -54,7 +56,9 @@ export default function WorkspaceStudioPage({
 }) {
   const resolvedParams = use(params);
   const workspaceId = resolvedParams.id;
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: session, isPending: isSessionPending } = useSession();
 
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(
@@ -64,21 +68,38 @@ export default function WorkspaceStudioPage({
   const [searchQuery, setSearchQuery] = useState("");
 
   // Workspace details
-  const { data: workspace } = useQuery({
+  const {
+    data: workspace,
+    isLoading: isLoadingWorkspace,
+    isError: isWorkspaceError,
+  } = useQuery({
     queryKey: ["workspace", workspaceId],
     queryFn: () => getWorkspace(workspaceId),
+    enabled: !!session?.user,
+    retry: false,
   });
+
+  // Redirect to landing page if user is not logged in or not authorized for this workspace
+  useEffect(() => {
+    if (!isSessionPending) {
+      if (!session?.user || isWorkspaceError) {
+        router.replace("/");
+      }
+    }
+  }, [isSessionPending, session, isWorkspaceError, router]);
 
   // Sources for targeted generation
   const { data: sources = [], isLoading: isLoadingSources } = useQuery({
     queryKey: ["sources", workspaceId],
     queryFn: () => getSources(workspaceId),
+    enabled: !!session?.user && !isWorkspaceError,
   });
 
   // Generated Artifacts with 1.5s active polling while processing
   const { data: artifacts = [], isLoading: isLoadingArtifacts } = useQuery({
     queryKey: ["artifacts", workspaceId],
     queryFn: () => getArtifacts(workspaceId),
+    enabled: !!session?.user && !isWorkspaceError,
     refetchInterval: (query) => {
       const data = query.state.data as LearningArtifact[] | undefined;
       const isProcessing = data?.some(
@@ -236,6 +257,22 @@ export default function WorkspaceStudioPage({
       artifact.type.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesType && matchesSearch;
   });
+
+  if (isSessionPending || !session?.user || isLoadingWorkspace || isWorkspaceError) {
+    return (
+      <div className="fixed inset-0 flex flex-col h-dvh max-h-dvh bg-background">
+        <Navbar />
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <p className="text-sm font-medium">
+            {!isSessionPending && (!session?.user || isWorkspaceError)
+              ? "Redirecting to landing page..."
+              : "Loading Study Studio..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 flex flex-col h-dvh max-h-dvh overflow-hidden bg-background">

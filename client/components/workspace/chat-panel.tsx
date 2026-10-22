@@ -631,7 +631,7 @@ export function ChatPanel({
 
       {/* Input Form */}
       <div className="p-3 sm:p-4 border-t bg-card/40 shrink-0">
-        <form onSubmit={handleSubmit} className="relative flex items-end gap-2.5">
+        <form onSubmit={handleSubmit} className="flex items-end gap-2 max-w-4xl mx-auto">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -640,7 +640,7 @@ export function ChatPanel({
                 ? "Ask a question about your sources... (Shift+Enter for newline)"
                 : "Ask SmartbookLM"
             }
-            className="min-h-[48px] max-h-[160px] resize-none pr-14 text-base sm:text-sm rounded-xl bg-background shadow-xs py-3"
+            className="min-h-[48px] max-h-[160px] resize-none px-4 text-base sm:text-sm rounded-xl bg-background shadow-xs py-3 leading-6"
             rows={1}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -655,12 +655,12 @@ export function ChatPanel({
             type="submit"
             size="icon"
             disabled={!input.trim() || isLoading}
-            className="h-10 w-10 rounded-xl shrink-0"
+            className="h-12 w-12 rounded-xl shrink-0 flex items-center justify-center shadow-xs"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <Send className="h-5 w-5" />
+              <Send className="h-5 w-5 -translate-y-px translate-x-px" />
             )}
           </Button>
         </form>
