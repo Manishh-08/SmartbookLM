@@ -1,9 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    {
-      "source": "/api/auth/:path*",
-      "destination": "https://smartbooklm.onrender.com/api/auth/:path*"
-    }
-  ]
-}
