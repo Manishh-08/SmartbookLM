@@ -325,3 +325,100 @@ export async function embedAndIndexSource(
     },
   });
 }
+
+// In-memory set to prevent duplicate concurrent runs of the same source
+const runningSourceJobs = new Set<string>();
+
+/**
+ * End-to-end processing of a source record:
+ * 1. Concurrency guard prevents duplicate processing runs.
+ * 2. Checks if the source is already properly indexed (READY + chunks + indexedAt).
+ * 3. Marks source as PROCESSING.
+ * 4. Extracts content if not already present.
+ * 5. Generates chunks into Postgres (if not yet chunked).
+ * 6. Generates embeddings and upserts to Pinecone.
+ * 7. Marks source as READY with indexedAt timestamp and chunkCount.
+ */
+export async function processSourceById(sourceId: string) {
+  if (isSourceProcessingAborted(sourceId)) {
+    clearAbortedSource(sourceId);
+    return null;
+  }
+
+  if (runningSourceJobs.has(sourceId)) {
+    return null;
+  }
+  runningSourceJobs.add(sourceId);
+
+  try {
+    const source = await findSourceById(sourceId);
+    if (!source) {
+      return null;
+    }
+
+    const metadata =
+      source.metadata &&
+      typeof source.metadata === "object" &&
+      !Array.isArray(source.metadata)
+        ? (source.metadata as SourceMetadata)
+        : {};
+
+    const existingChunks = await findChunksBySourceId(sourceId);
+    if (
+      source.status === "READY" &&
+      existingChunks.length > 0 &&
+      metadata.indexedAt
+    ) {
+      return source;
+    }
+
+    if (isSourceProcessingAborted(sourceId)) {
+      return null;
+    }
+
+    await markSourceProcessing(sourceId);
+
+    if (isSourceProcessingAborted(sourceId)) {
+      return null;
+    }
+
+    const extracted = await extractSourceContent(sourceId);
+    if (!extracted || isSourceProcessingAborted(sourceId)) {
+      return null;
+    }
+
+    let chunks = await findChunksBySourceId(sourceId);
+    if (chunks.length === 0) {
+      chunks = await chunkSourceContent(
+        sourceId,
+        extracted.text,
+        extracted.pages,
+      );
+    }
+
+    if (isSourceProcessingAborted(sourceId)) {
+      return null;
+    }
+
+    const currentSource = await findSourceById(sourceId);
+    if (!currentSource) {
+      return null;
+    }
+
+    await embedAndIndexSource(currentSource, chunks);
+
+    return await findSourceById(sourceId);
+  } catch (error) {
+    if (isSourceProcessingAborted(sourceId)) {
+      return null;
+    }
+    const currentSource = await findSourceById(sourceId);
+    if (currentSource) {
+      await markSourceFailed(sourceId, error, currentSource.metadata);
+    }
+    throw error;
+  } finally {
+    runningSourceJobs.delete(sourceId);
+    clearAbortedSource(sourceId);
+  }
+}

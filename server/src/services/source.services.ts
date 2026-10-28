@@ -15,7 +15,7 @@ import {
 import { NotFoundError } from "../types/app-error.js";
 import { CreateSourceInput, ImportWebsiteInput, ImportYoutubeInput, ListSourcesQuery } from "../validators/source.validator.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
-import { removeSourceFromIndex, abortSourceProcessing } from "./source-processing.services.js";
+import { removeSourceFromIndex, abortSourceProcessing, processSourceById } from "./source-processing.services.js";
 
 async function assertWorkspaceAccess(workspaceId: string, userId: string) {
     await getWorkspaceByIdForUser(workspaceId, userId);
@@ -35,6 +35,11 @@ async function createAndProcessSource(
         console.warn("Inngest background processing enqueue failed:", inngestError);
     }
 
+    // Trigger local background processing so it never stalls if Inngest worker is offline
+    void processSourceById(source.id).catch((err) => {
+        console.error("Local background source processing failed:", err);
+    });
+
     return source;
 }
 
@@ -45,7 +50,23 @@ export async function listSourcesForWorkspace(
     filters: ListSourcesQuery = {},
 ) {
     await assertWorkspaceAccess(workspaceId, userId);
-    return findSourcesByWorkspaceId(workspaceId, filters);
+    const sources = await findSourcesByWorkspaceId(workspaceId, filters);
+
+    // Self-healing: if any source has content or is pending/unindexed,
+    // trigger background indexing so vectors exist in Pinecone for chat.
+    for (const source of sources) {
+        const metadata = (source.metadata && typeof source.metadata === "object" && !Array.isArray(source.metadata))
+            ? (source.metadata as Record<string, unknown>)
+            : {};
+        const isNotIndexed = !metadata.indexedAt || !metadata.chunkCount;
+        if ((source.status === "PENDING" || source.status === "PROCESSING" || (source.status === "READY" && isNotIndexed)) && source.content) {
+            void processSourceById(source.id).catch((err) => {
+                console.warn(`Self-healing background indexing failed for source ${source.id}:`, err);
+            });
+        }
+    }
+
+    return sources;
 }
 
 export async function getSourceForWorkspace(
@@ -182,7 +203,7 @@ export async function uploadPdfSource(
         type: "PDF",
         title: title?.trim() || file.originalname.replace(/\.pdf$/i, ""),
         content,
-        status: content ? "READY" : "PENDING",
+        status: "PENDING",
         metadata: metadata as Prisma.InputJsonValue,
     });
 }

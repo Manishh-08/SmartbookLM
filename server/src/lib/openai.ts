@@ -46,7 +46,7 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
   }
 
   const response = await client.embeddings.create({
-    model: EMBEDDING_MODEL,
+    model: resolveModelName(EMBEDDING_MODEL),
     input: texts,
     dimensions: EMBEDDING_DIMENSIONS,
   });
